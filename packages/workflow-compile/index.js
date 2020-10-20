@@ -61,7 +61,7 @@ async function compile(config) {
 }
 
 const WorkflowCompile = {
-  async compile(options, loadDb = false) {
+  async compile(options) {
     const config = prepareConfig(options);
 
     if (config.events) config.events.emit("compile:start");
