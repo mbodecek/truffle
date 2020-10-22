@@ -1,42 +1,19 @@
+import { logger } from "@truffle/db/logger";
+const debug = logger("db:db");
+
 import { GraphQLSchema, DocumentNode, parse, execute } from "graphql";
-import { schema } from "@truffle/db/data";
+import type TruffleConfig from "@truffle/config";
 import { generateCompileLoad } from "@truffle/db/loaders/commands";
-import {
-  WorkspaceRequest,
-  WorkspaceResponse,
-  toIdObject,
-  NamedResource
-} from "@truffle/db/loaders/types";
+import { LoaderRunner, forDb } from "@truffle/db/loaders/run";
 import { WorkflowCompileResult } from "@truffle/compile-common";
-import { Workspace } from "@truffle/db/workspace";
+import { schema } from "./schema";
+import { connect } from "./connect";
+import { Context } from "./definitions";
 import {
   generateInitializeLoad,
   generateNamesLoad
 } from "@truffle/db/loaders/commands";
-
-interface IConfig {
-  contracts_build_directory: string;
-  contracts_directory: string;
-  working_directory?: string;
-  db?: {
-    adapter?: {
-      name: string;
-      settings?: any;
-    };
-  };
-}
-
-interface IContext {
-  artifactsDirectory: string;
-  workingDirectory: string;
-  contractsDirectory: string;
-  workspace: Workspace;
-  db: ITruffleDB;
-}
-
-interface ITruffleDB {
-  query: (query: DocumentNode | string, variables: any) => Promise<any>;
-}
+import { toIdObject, NamedResource } from "@truffle/db/meta";
 
 type LoaderOptions = {
   names: boolean;
@@ -44,11 +21,13 @@ type LoaderOptions = {
 
 export class TruffleDB {
   schema: GraphQLSchema;
-  context: IContext;
+  private context: Context;
+  private runLoader: LoaderRunner;
 
-  constructor(config: IConfig) {
-    this.context = this.createContext(config);
+  constructor(config: TruffleConfig) {
     this.schema = schema;
+    this.context = this.createContext(config);
+    this.runLoader = forDb(this);
   }
 
   async query(query: DocumentNode | string, variables: any = {}): Promise<any> {
@@ -58,38 +37,7 @@ export class TruffleDB {
     return await execute(this.schema, document, null, this.context, variables);
   }
 
-  async getWorkspaceResponse(generatorRequest: WorkspaceRequest) {
-    const { request, variables }: WorkspaceRequest = generatorRequest;
-
-    const response: WorkspaceResponse = await this.query(request, variables);
-
-    return response;
-  }
-
-  private async runLoader<
-    Request extends WorkspaceRequest,
-    Response extends WorkspaceResponse,
-    Args extends unknown[],
-    Return
-  >(
-    loader: (...args: Args) => Generator<Request, Return, Response>,
-    ...args: Args
-  ): Promise<Return> {
-    const saga = loader(...args);
-    let current = saga.next();
-
-    while (!current.done) {
-      const { request, variables } = current.value as Request;
-
-      const response: Response = await this.query(request, variables);
-
-      current = saga.next(response);
-    }
-
-    return current.value;
-  }
-
-  async loadNames(project: DataModel.IProject, resources: NamedResource[]) {
+  async loadNames(project: DataModel.Project, resources: NamedResource[]) {
     return await this.runLoader(
       generateNamesLoad,
       toIdObject(project),
@@ -97,7 +45,7 @@ export class TruffleDB {
     );
   }
 
-  async loadProject(): Promise<DataModel.IProject> {
+  async loadProject(): Promise<DataModel.Project> {
     return await this.runLoader(generateInitializeLoad, {
       directory: this.context.workingDirectory
     });
@@ -121,16 +69,13 @@ export class TruffleDB {
     return { compilations, contracts };
   }
 
-  createContext(config: IConfig): IContext {
+  private createContext(config: TruffleConfig): Context {
     return {
-      workspace: new Workspace({
+      workspace: connect({
         workingDirectory: config.working_directory,
         adapter: (config.db || {}).adapter
       }),
-      artifactsDirectory: config.contracts_build_directory,
-      workingDirectory: config.working_directory || process.cwd(),
-      contractsDirectory: config.contracts_directory,
-      db: this
+      workingDirectory: config.working_directory || process.cwd()
     };
   }
 }

@@ -1,8 +1,7 @@
-import {
-  CompilationData,
-  WorkspaceRequest,
-  WorkspaceResponse
-} from "@truffle/db/loaders/types";
+import { logger } from "@truffle/db/logger";
+const debug = logger("db:loaders:commands:compile");
+
+import { CompilationData, Load } from "@truffle/db/loaders/types";
 import {
   WorkflowCompileResult,
   Compilation,
@@ -24,7 +23,10 @@ import { generateSourcesLoad } from "@truffle/db/loaders/resources/sources";
  */
 export function* generateCompileLoad(
   result: WorkflowCompileResult
-): Generator<WorkspaceRequest, any, WorkspaceResponse<string>> {
+): Load<{
+  compilations: DataModel.Compilation[];
+  contracts: DataModel.Contract[];
+}> {
   const resultCompilations = processResultCompilations(result);
 
   // for each compilation returned by workflow-compile:
