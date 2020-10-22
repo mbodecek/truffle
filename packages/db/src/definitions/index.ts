@@ -10,6 +10,7 @@ import { networks } from "./networks";
 import { nameRecords } from "./nameRecords";
 import { projects } from "./projects";
 import { projectNames } from "./projectNames";
+import { networkGenealogies } from "./networkGenealogies";
 
 export const definitions: Definitions = {
   sources,
@@ -20,5 +21,6 @@ export const definitions: Definitions = {
   networks,
   nameRecords,
   projects,
-  projectNames
+  projectNames,
+  networkGenealogies
 };

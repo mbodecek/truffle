@@ -43,6 +43,8 @@ declare namespace DataModel {
   type ISourceRange = any;
   type ISourcesAddInput = any;
   type ISourcesAddPayload = any;
+  type INetworkGenealogy = any;
+  type INetworkGenealogyInput = any;
 
   interface IWorkspaceQuery {
     [key: string]: any;

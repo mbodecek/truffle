@@ -42,6 +42,10 @@ export type Collections = {
     input: DataModel.IProjectNameInput;
     mutable: true;
   };
+  networkGenealogies: {
+    resource: DataModel.INetworkGenealogy;
+    input: DataModel.INetworkGenealogyInput;
+  };
 };
 
 export type CollectionName = Meta.CollectionName<Collections>;
