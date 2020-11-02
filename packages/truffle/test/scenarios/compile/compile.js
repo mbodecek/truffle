@@ -403,7 +403,8 @@ describe("Compilation with db enabled", async () => {
     Server.stop(done);
   });
 
-  it("creates a .db directory when db is enabled", async () => {
+  it("creates a .db directory when db is enabled", async function () {
+    this.timeout(10000);
     const project = path.join(__dirname, "../../sources/contract_names");
     const config = await sandbox.create(project);
 
