@@ -59,8 +59,8 @@ export const generateContractsLoad = Batch.Contracts.generate<{
     };
   },
 
-  *process({ batch }) {
-    return yield* generate.load("contracts", batch);
+  *process({ entries }) {
+    return yield* generate.load("contracts", entries);
   },
 
   convert<_I, _O>({ result, input: contract }) {
